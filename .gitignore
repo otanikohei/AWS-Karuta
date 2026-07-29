@@ -1,0 +1,6 @@
+# macOS
+.DS_Store
+
+# Illustrator / temp files
+*.tmp
+~ai-*.tmp

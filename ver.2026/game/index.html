@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS かるた Version.2026</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #1a472a;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      user-select: none;
+    }
+
+    /* Header */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 200;
+      gap: 20px;
+    }
+
+    .header .title {
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .header .progress {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .header .timer {
+      margin-left: auto;
+      font-size: 20px;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      color: #4fc3f7;
+    }
+
+    /* Field */
+    .field {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 4px;
+      padding: 44px 4px 4px 4px;
+    }
+
+    .card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    }
+
+    .card.taken {
+      opacity: 0.15;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+
+    .card.correct-flash {
+      animation: flash-correct 0.4s;
+    }
+
+    @keyframes flash-correct {
+      0% { box-shadow: 0 0 0 4px #4caf50; }
+      100% { box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+    }
+
+    .card.wrong-flash {
+      animation: flash-wrong 0.3s;
+    }
+
+    @keyframes flash-wrong {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 2px;
+    }
+
+    /* Overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      color: #fff;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    /* Start Screen */
+    #start-screen .start-title {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #start-screen .start-sub {
+      font-size: 18px;
+      opacity: 0.7;
+      margin-bottom: 40px;
+    }
+
+    #start-screen button {
+      font-size: 24px;
+      padding: 16px 48px;
+      border: none;
+      border-radius: 8px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    #start-screen button:hover {
+      background: #66bb6a;
+    }
+
+    /* Countdown */
+    #countdown-screen .countdown-number {
+      font-size: 120px;
+      font-weight: bold;
+      animation: pop 0.5s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Next prompt */
+    #next-prompt {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 250;
+      cursor: pointer;
+    }
+
+    #next-prompt.hidden {
+      display: none;
+    }
+
+    #next-prompt .next-text {
+      font-size: 64px;
+      font-weight: bold;
+      color: #fff;
+      animation: pop 0.3s ease;
+    }
+
+    #next-prompt .next-sub {
+      font-size: 18px;
+      color: #ccc;
+      margin-top: 12px;
+    }
+
+    /* Result Screen */
+    #result-screen .result-title {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    #result-screen .result-time {
+      font-size: 64px;
+      font-weight: bold;
+      color: #4fc3f7;
+      margin-bottom: 30px;
+    }
+
+    #result-screen .ranking {
+      width: 360px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 30px;
+    }
+
+    #result-screen .ranking h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    #result-screen .ranking ol {
+      list-style: none;
+      padding: 0;
+    }
+
+    #result-screen .ranking li {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+
+    #result-screen .ranking li:nth-child(odd) {
+      background: rgba(255,255,255,0.05);
+    }
+
+    #result-screen .ranking li.current {
+      background: rgba(79, 195, 247, 0.2);
+      font-weight: bold;
+    }
+
+    #result-screen .ranking li .rank {
+      width: 30px;
+      color: #aaa;
+    }
+
+    #result-screen .ranking li .time {
+      color: #4fc3f7;
+    }
+
+    #result-screen button {
+      font-size: 20px;
+      padding: 12px 36px;
+      border: none;
+      border-radius: 8px;
+      background: #4caf50;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #result-screen button:hover {
+      background: #66bb6a;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <span class="title">AWS かるた 2026</span>
+    <span class="progress" id="progress">0 / 10</span>
+    <span class="timer" id="timer">0:00.0</span>
+  </div>
+
+  <!-- Card Field -->
+  <div class="field" id="field"></div>
+
+  <!-- Start Screen -->
+  <div class="overlay" id="start-screen">
+    <div class="start-title">AWS かるた</div>
+    <div class="start-sub">Version 2026 — 10問チャレンジ</div>
+    <button id="btn-start">スタート</button>
+  </div>
+
+  <!-- Countdown Screen -->
+  <div class="overlay hidden" id="countdown-screen">
+    <div class="countdown-number" id="countdown-number">3</div>
+  </div>
+
+  <!-- Next Prompt -->
+  <div id="next-prompt" class="hidden">
+    <div style="text-align:center;">
+      <div class="next-text">次</div>
+      <div class="next-sub">クリックで読み上げ開始</div>
+    </div>
+  </div>
+
+  <!-- Result Screen -->
+  <div class="overlay hidden" id="result-screen">
+    <div class="result-title">結果</div>
+    <div class="result-time" id="result-time">0:00.0</div>
+    <div class="ranking" id="ranking"></div>
+    <button id="btn-retry">もう一度</button>
+  </div>
+
+  <script>
+    // --- Data ---
+    const services = [
+      { service: 'Amazon Athena', file: 'Amazon-Athena', upper: 'バケット内のテキストを', bottom: '自由にクエリ Amazon Athena' },
+      { service: 'Amazon Bedrock', file: 'Amazon-Bedrock', upper: 'モデルを選んで呼ぶだけで', bottom: 'AI が答える Amazon Bedrock' },
+      { service: 'Amazon Braket', file: 'Amazon-Braket', upper: '桁違いの処理速度', bottom: '量子コンピューティング Amazon Braket' },
+      { service: 'Amazon CloudFront', file: 'Amazon-CloudFront', upper: '世界のどこから繋いでも', bottom: '快適アクセス Amazon CloudFront' },
+      { service: 'Amazon Cognito', file: 'Amazon-Cognito', upper: 'ユーザープールもフェデレートも', bottom: '認証するなら Amazon Cognito' },
+      { service: 'Amazon Connect', file: 'Amazon-Connect', upper: '交換機も電話機も', bottom: '無くても通話 Amazon Connect' },
+      { service: 'Amazon Data Firehose', file: 'Amazon-Data-Firehose', upper: '蛇口にホースを繋ぐように', bottom: 'データが流れる Amazon Data Firehose' },
+      { service: 'Amazon DynamoDB', file: 'Amazon-DynamoDB', upper: 'Key と Value で入れていく', bottom: 'スキャンとクエリで Amazon DynamoDB' },
+      { service: 'Amazon EBS', file: 'Amazon-Elastic-Block-Store-(EBS)', upper: '電源落ちても大丈夫', bottom: 'データは永続 Amazon EBS' },
+      { service: 'Amazon EC2', file: 'Amazon-Elastic-Compute-Cloud-(EC2)', upper: 'ハードのお世話は もうしない', bottom: '欲しいときだけ Amazon EC2' },
+      { service: 'Amazon ECS', file: 'Amazon-Elastic-Container-Service-(ECS)', upper: 'コンテナ管理で悩むなら', bottom: 'タスクに任せて Amazon ECS' },
+      { service: 'Amazon EFS', file: 'Amazon-Elastic-File-System-(EFS)', upper: '複数インスタンスまたいでも', bottom: '共有ストレージ Amazon EFS' },
+      { service: 'Amazon GameLift', file: 'Amazon-GameLift', upper: 'マルチプレイのサーバーを', bottom: 'スケーリングお任せ Amazon GameLift' },
+      { service: 'Amazon GuardDuty', file: 'Amazon-GuardDuty', upper: '不審な行動、見つけ出す', bottom: '脅威検知は Amazon GuardDuty で' },
+      { service: 'Amazon Inspector', file: 'Amazon-Inspector', upper: '脆弱性を見つけ出す', bottom: '継続検査を Amazon Inspector で' },
+      { service: 'Amazon IVS', file: 'Amazon-Interactive-Video-Service-(IVS)', upper: 'ライブ配信のインフラを', bottom: '低遅延で届ける Amazon IVS' },
+      { service: 'Amazon Macie', file: 'Amazon-Macie', upper: 'バケット覗いて見つけ出す', bottom: '機密データ発見 Amazon Macie' },
+      { service: 'Amazon Managed Blockchain', file: 'Amazon-Managed-Blockchain', upper: '信頼できる台帳が欲しければ', bottom: '改ざんさせない Amazon Managed Blockchain' },
+      { service: 'Amazon OpenSearch Service', file: 'Amazon-OpenSearch-Service', upper: 'ログも全文検索も', bottom: 'まとめて検索 Amazon OpenSearch' },
+      { service: 'Amazon Polly', file: 'Amazon-Polly', upper: '書いた文章そのまんま', bottom: '読み上げてくれる Amazon Polly' },
+      { service: 'Amazon Quick', file: 'Amazon-Quick', upper: 'BI ツールだけじゃない', bottom: 'AI コンシェルジュ Amazon Quick' },
+      { service: 'Amazon Redshift', file: 'Amazon-Redshift', upper: '高速、縦向き検索の', bottom: 'データウェアハウス Amazon Redshift' },
+      { service: 'Amazon RDS', file: 'Amazon-Relational-Database-Service-(RDS)', upper: 'データベースの障害だ', bottom: 'フェイルオーバー Amazon RDS' },
+      { service: 'Amazon SES', file: 'Amazon-Simple-Email-Service-(SES)', upper: '大量メール配信を', bottom: 'スケーラブルに Amazon SES' },
+      { service: 'Amazon SNS', file: 'Amazon-Simple-Notification-Service-(SNS)', upper: 'Pub/Sub でファンアウト', bottom: '通知を届ける Amazon SNS' },
+      { service: 'Amazon SQS', file: 'Amazon-Simple-Queue-Service-(SQS)', upper: 'メッセージを溜めて順番に', bottom: '疎結合なら Amazon SQS' },
+      { service: 'Amazon S3', file: 'Amazon-Simple-Storage-Service-(S3)', upper: 'イレブンナインの耐久性', bottom: 'オブジェクトストレージ Amazon S3' },
+      { service: 'Amazon Textract', file: 'Amazon-Textract', upper: '紙の書類もスキャンして', bottom: '文字を抽出 Amazon Textract' },
+      { service: 'Amazon VPC', file: 'Amazon-Virtual-Private-Cloud-(VPC)', upper: 'クラウド、セキュアに隔離して', bottom: '限定アクセス Amazon VPC' },
+      { service: 'AWS AppSync', file: 'AWS-AppSync', upper: 'あちこち分散サービスを', bottom: 'ひとつにつなぐ AWS AppSync' },
+      { service: 'AWS Batch', file: 'AWS-Batch', upper: '裏ではコンテナ動きます', bottom: 'バッチ処理なら AWS Batch' },
+      { service: 'AWS Certificate Manager', file: 'AWS-Certificate-Manager-(ACM)', upper: '証明書の管理なら', bottom: 'お任せ Amazon Certificate Manager' },
+      { service: 'AWS CloudHSM', file: 'AWS-CloudHSM', upper: 'ハードウェアで鍵管理', bottom: 'AWS CloudHSM' },
+      { service: 'AWS CodeCommit', file: 'AWS-CodeCommit', upper: 'やっぱりお前が必要だ', bottom: 'Git 管理は AWS CodeCommit で' },
+      { service: 'AWS CodeDeploy', file: 'AWS-CodeDeploy', upper: '裏では VM 動きます', bottom: 'CI/CD AWS CodeDeploy' },
+      { service: 'AWS DevOps Agent', file: 'AWS-DevOps-Agent', upper: 'ログ調査の手が足りない', bottom: '猫の手なります AWS DevOps Agent' },
+      { service: 'AWS Direct Connect', file: 'AWS-Direct-Connect', upper: '専用線接続で', bottom: '通信安定 AWS Direct Connect' },
+      { service: 'AWS Glue', file: 'AWS-Glue', upper: '異なるデータ形式を', bottom: 'ETL 処理 AWS Glue' },
+      { service: 'AWS IAM Identity Center', file: 'AWS-IAM-Identity-Center', upper: 'SAML 連携も SSO も', bottom: 'おまかせ AWS IAM Identity Center' },
+      { service: 'AWS IoT Core', file: 'AWS-IoT-Core', upper: 'モノとクラウドをつなぐなら', bottom: 'デバイス通信 AWS IoT Core' },
+      { service: 'AWS Lambda', file: 'AWS-Lambda', upper: '生まれてはや 11 年', bottom: 'サーバーレスサービス AWS Lambda' },
+      { service: 'AWS Managed Microsoft AD', file: 'AWS-Managed-Microsoft-AD', upper: 'AD サーバー買い換える', bottom: '前に検討 AWS Managed Microsoft AD' },
+      { service: 'AWS Security Agent', file: 'AWS-Security-Agent-part-of-AWS-Continuum', upper: '侵入テストも考えます', bottom: 'Continuum に統合された AWS Security Agent' },
+      { service: 'AWS Security Hub CSPM', file: 'AWS-Security-Hub-CSPM', upper: 'コンプライアンス準拠なら', bottom: 'スコアで見える化 AWS Security Hub CSPM' },
+      { service: 'AWS Security Lake', file: 'AWS-Security-Lake', upper: 'OCSF 形式で', bottom: 'まとめて収集 AWS Security Lake' },
+      { service: 'AWS Step Functions', file: 'AWS-Step-Functions', upper: 'ステートマシンを操って', bottom: '柔軟に処理する AWS Step Functions' },
+      { service: 'AWS Systems Manager', file: 'AWS-Systems-Manager', upper: 'サーバー管理はお任せを！', bottom: 'パッチも当てれる AWS Systems Manager' },
+      { service: 'AWS Transform MGN', file: 'AWS-Transform-MGN', upper: 'リフトアンドシフトなら', bottom: '名前が変わった AWS Transform MGN' },
+      { service: 'AWS Transit Gateway', file: 'AWS-Transit-Gateway', upper: 'フルメッシュに疲れたら', bottom: 'アタッチメントで楽々 AWS Transit Gateway' },
+      { service: 'AWS WAF', file: 'AWS-WAF', upper: 'わずか数分でブロックが', bottom: 'できるようになった AWS WAF' },
+    ];
+
+    // --- Game State ---
+    const TOTAL_QUESTIONS = 10;
+    let questions = [];
+    let currentQ = 0;
+    let timerStart = 0;
+    let timerElapsed = 0;
+    let timerRunning = false;
+    let timerRAF = null;
+    let currentAudio = null;
+    let gameActive = false;
+
+    // --- DOM ---
+    const fieldEl = document.getElementById('field');
+    const timerEl = document.getElementById('timer');
+    const progressEl = document.getElementById('progress');
+    const startScreen = document.getElementById('start-screen');
+    const countdownScreen = document.getElementById('countdown-screen');
+    const countdownNumber = document.getElementById('countdown-number');
+    const nextPrompt = document.getElementById('next-prompt');
+    const resultScreen = document.getElementById('result-screen');
+    const resultTime = document.getElementById('result-time');
+    const rankingEl = document.getElementById('ranking');
+
+    // --- Utility ---
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function formatTime(ms) {
+      const totalSec = ms / 1000;
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}:${sec < 10 ? '0' : ''}${sec.toFixed(1)}`;
+    }
+
+    // --- Timer ---
+    function startTimer() {
+      timerStart = performance.now() - timerElapsed;
+      timerRunning = true;
+      tickTimer();
+    }
+
+    function pauseTimer() {
+      timerRunning = false;
+      if (timerRAF) cancelAnimationFrame(timerRAF);
+    }
+
+    function resetTimer() {
+      timerElapsed = 0;
+      timerRunning = false;
+      if (timerRAF) cancelAnimationFrame(timerRAF);
+      timerEl.textContent = '0:00.0';
+    }
+
+    function tickTimer() {
+      if (!timerRunning) return;
+      timerElapsed = performance.now() - timerStart;
+      timerEl.textContent = formatTime(timerElapsed);
+      timerRAF = requestAnimationFrame(tickTimer);
+    }
+
+    // --- Build Field ---
+    function buildField() {
+      fieldEl.innerHTML = '';
+      const shuffled = shuffle(services);
+      shuffled.forEach((svc) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.file = svc.file;
+        card.innerHTML = `<img src="images/${svc.file}.png" alt="${svc.service}">`;
+        card.addEventListener('click', () => onCardClick(card, svc));
+        fieldEl.appendChild(card);
+      });
+    }
+
+    // --- Card Click ---
+    function onCardClick(cardEl, svc) {
+      if (!gameActive) return;
+
+      const current = questions[currentQ];
+      if (svc.file === current.file) {
+        // Correct
+        cardEl.classList.add('correct-flash', 'taken');
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+        pauseTimer();
+        currentQ++;
+        progressEl.textContent = `${currentQ} / ${TOTAL_QUESTIONS}`;
+
+        if (currentQ >= TOTAL_QUESTIONS) {
+          setTimeout(showResult, 600);
+        } else {
+          setTimeout(showNextPrompt, 600);
+        }
+      } else {
+        // Wrong
+        cardEl.classList.add('wrong-flash');
+        setTimeout(() => cardEl.classList.remove('wrong-flash'), 300);
+      }
+    }
+
+    // --- Audio ---
+    function playAudio(file) {
+      return new Promise((resolve) => {
+        currentAudio = new Audio(`audio/${file}.mp3`);
+        currentAudio.addEventListener('ended', resolve);
+        currentAudio.addEventListener('error', resolve);
+        currentAudio.play();
+      });
+    }
+
+    // --- Game Flow ---
+    document.getElementById('btn-start').addEventListener('click', startGame);
+    document.getElementById('btn-retry').addEventListener('click', retry);
+
+    async function startGame() {
+      startScreen.classList.add('hidden');
+      buildField();
+      questions = shuffle(services).slice(0, TOTAL_QUESTIONS);
+      currentQ = 0;
+      resetTimer();
+      progressEl.textContent = `0 / ${TOTAL_QUESTIONS}`;
+
+      // Countdown
+      countdownScreen.classList.remove('hidden');
+      for (let i = 3; i >= 1; i--) {
+        countdownNumber.textContent = i;
+        countdownNumber.style.animation = 'none';
+        void countdownNumber.offsetWidth;
+        countdownNumber.style.animation = '';
+        await wait(1000);
+      }
+      countdownScreen.classList.add('hidden');
+
+      // Start game
+      gameActive = true;
+      startTimer();
+      playAudio(questions[currentQ].file);
+    }
+
+    function showNextPrompt() {
+      nextPrompt.classList.remove('hidden');
+      nextPrompt.onclick = () => {
+        nextPrompt.classList.add('hidden');
+        startTimer();
+        playAudio(questions[currentQ].file);
+      };
+    }
+
+    function showResult() {
+      gameActive = false;
+      const finalTime = timerElapsed;
+
+      // Save to ranking
+      const rankings = JSON.parse(localStorage.getItem('aws-karuta-rankings') || '[]');
+      const entry = { time: finalTime, date: new Date().toLocaleString('ja-JP') };
+      rankings.push(entry);
+      rankings.sort((a, b) => a.time - b.time);
+      if (rankings.length > 20) rankings.length = 20;
+      localStorage.setItem('aws-karuta-rankings', JSON.stringify(rankings));
+
+      // Display
+      resultTime.textContent = formatTime(finalTime);
+      renderRanking(rankings, finalTime);
+      resultScreen.classList.remove('hidden');
+    }
+
+    function renderRanking(rankings, currentTime) {
+      let html = '<h3>ランキング (Top 10)</h3><ol>';
+      rankings.slice(0, 10).forEach((r, i) => {
+        const isCurrent = Math.abs(r.time - currentTime) < 10;
+        html += `<li class="${isCurrent ? 'current' : ''}">
+          <span class="rank">${i + 1}.</span>
+          <span class="time">${formatTime(r.time)}</span>
+          <span>${r.date}</span>
+        </li>`;
+      });
+      html += '</ol>';
+      rankingEl.innerHTML = html;
+    }
+
+    function retry() {
+      resultScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Build initial field for visual
+    buildField();
+  </script>
+</body>
+</html>

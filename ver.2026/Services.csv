@@ -1,0 +1,51 @@
+Service,upper phrase,bottom phrase
+Amazon Athena,バケット内のテキストを,自由にクエリ Amazon Athena
+Amazon Bedrock,モデルを選んで呼ぶだけで,AI が答える Amazon Bedrock
+Amazon Braket,桁違いの処理速度,量子コンピューティング Amazon Braket
+Amazon CloudFront,世界のどこから繋いでも,快適アクセス Amazon CloudFront
+Amazon Cognito,ユーザープールもフェデレートも,認証するなら Amazon Cognito
+Amazon Connect,交換機も電話機も,無くても通話 Amazon Connect
+Amazon Data Firehose,蛇口にホースを繋ぐように,データが流れる Amazon Data Firehose
+Amazon DynamoDB,Key と Value で入れていく,スキャンとクエリで Amazon DynamoDB
+Amazon Elastic Block Store (EBS),電源落ちても大丈夫,データは永続 Amazon EBS
+Amazon Elastic Compute Cloud (EC2),ハードのお世話は もうしない,欲しいときだけ Amazon EC2
+Amazon Elastic Container Service (ECS),コンテナ管理で悩むなら,タスクに任せて Amazon ECS
+Amazon Elastic File System (EFS),複数インスタンスまたいでも,共有ストレージ Amazon EFS
+Amazon GameLift,マルチプレイのサーバーを,スケーリングお任せ Amazon GameLift
+Amazon GuardDuty,不審な行動、見つけ出す,脅威検知は Amazon GuardDuty で
+Amazon Inspector,脆弱性を見つけ出す,継続検査を Amazon Inspector で
+Amazon Interactive Video Service (IVS),ライブ配信のインフラを,低遅延で届ける Amazon IVS
+Amazon Macie,バケット覗いて見つけ出す,機密データ発見 Amazon Macie
+Amazon Managed Blockchain,信頼できる台帳が欲しければ,改ざんさせない Amazon Managed Blockchain
+Amazon OpenSearch Service,ログも全文検索も,まとめて検索 Amazon OpenSearch
+Amazon Polly,書いた文章そのまんま,読み上げてくれる Amazon Polly
+Amazon Quick,BI ツールだけじゃない,AI コンシェルジュ Amazon Quick
+Amazon Redshift,高速、縦向き検索の,データウェアハウス Amazon Redshift
+Amazon Relational Database Service (RDS),データベースの障害だ,フェイルオーバー Amazon RDS
+Amazon Simple Email Service (SES),大量メール配信を,スケーラブルに Amazon SES
+Amazon Simple Notification Service (SNS),Pub/Sub でファンアウト,通知を届ける Amazon SNS
+Amazon Simple Queue Service (SQS),メッセージを溜めて順番に,疎結合なら Amazon SQS
+Amazon Simple Storage Service (S3),イレブンナインの耐久性,オブジェクトストレージ Amazon S3
+Amazon Textract,紙の書類もスキャンして,文字を抽出 Amazon Textract
+Amazon Virtual Private Cloud (VPC),クラウド、セキュアに隔離して,限定アクセス Amazon VPC
+AWS AppSync,あちこち分散サービスを,ひとつにつなぐ AWS AppSync
+AWS Batch,裏ではコンテナ動きます,バッチ処理なら AWS Batch
+AWS Certificate Manager (ACM),証明書の管理なら,お任せ Amazon Certificate Manager
+AWS CloudHSM,ハードウェアで鍵管理,AWS CloudHSM
+AWS CodeCommit,やっぱりお前が必要だ,Git 管理は AWS CodeCommit で
+AWS CodeDeploy,裏では VM 動きます,CI/CD AWS CodeDeploy
+AWS DevOps Agent,ログ調査の手が足りない,猫の手なります AWS DevOps Agent
+AWS Direct Connect,専用線接続で,通信安定 AWS Direct Connect
+AWS Glue,異なるデータ形式を,ETL 処理 AWS Glue
+AWS IAM Identity Center,SAML 連携も SSO も,おまかせ AWS IAM Identity Center
+AWS IoT Core,モノとクラウドをつなぐなら,デバイス通信 AWS IoT Core
+AWS Lambda,生まれてはや 11 年,サーバーレスサービス AWS Lambda
+AWS Managed Microsoft AD,AD サーバー買い換える,前に検討 AWS Managed Microsoft AD
+AWS Security Agent part of AWS Continuum,侵入テストも考えます,Continuum に統合された AWS Security Agent
+AWS Security Hub CSPM,コンプライアンス準拠なら,スコアで見える化 AWS Security Hub CSPM
+AWS Security Lake,OCSF 形式で,まとめて収集 AWS Security Lake
+AWS Step Functions,ステートマシンを操って,柔軟に処理する AWS Step Functions
+AWS Systems Manager,サーバー管理はお任せを！,パッチも当てれる AWS Systems Manager
+AWS Transform MGN,リフトアンドシフトなら,名前が変わった AWS Transform MGN
+AWS Transit Gateway,フルメッシュに疲れたら,アタッチメントで楽々 AWS Transit Gateway
+AWS WAF,わずか数分でブロックが,できるようになった AWS WAF

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Karuta - 50枚レイアウト確認</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #1a472a;
+      font-family: sans-serif;
+    }
+
+    .info-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 6px 16px;
+      font-size: 13px;
+      z-index: 100;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .info-bar span {
+      opacity: 0.8;
+    }
+
+    .timer {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .timer-display {
+      font-size: 16px;
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      min-width: 60px;
+    }
+
+    .timer button {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .timer button:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .field {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 4px;
+      padding: 32px 4px 4px 4px;
+    }
+
+    .card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    .card img {
+      width: 95%;
+      height: 95%;
+      object-fit: contain;
+      padding: 2px;
+    }
+
+    .card .number {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 10px;
+      color: #666;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="info-bar">
+    <strong>AWS かるた Version.2026</strong>
+    <div class="timer">
+      <button id="btn-start">▶ Start</button>
+      <button id="btn-reset">↺ Reset</button>
+      <span class="timer-display" id="timer-display">0:00</span>
+    </div>
+  </div>
+
+  <div class="field" id="field">
+  </div>
+
+  <script>
+    const field = document.getElementById('field');
+
+    const files = [
+      'Amazon-Athena.png',
+      'Amazon-Bedrock.png',
+      'Amazon-Braket.png',
+      'Amazon-CloudFront.png',
+      'Amazon-Cognito.png',
+      'Amazon-Connect.png',
+      'Amazon-Data-Firehose.png',
+      'Amazon-DynamoDB.png',
+      'Amazon-Elastic-Block-Store-(EBS).png',
+      'Amazon-Elastic-Compute-Cloud-(EC2).png',
+      'Amazon-Elastic-Container-Service-(ECS).png',
+      'Amazon-Elastic-File-System-(EFS).png',
+      'Amazon-GameLift.png',
+      'Amazon-GuardDuty.png',
+      'Amazon-Inspector.png',
+      'Amazon-Interactive-Video-Service-(IVS).png',
+      'Amazon-Macie.png',
+      'Amazon-Managed-Blockchain.png',
+      'Amazon-OpenSearch-Service.png',
+      'Amazon-Polly.png',
+      'Amazon-Quick.png',
+      'Amazon-Redshift.png',
+      'Amazon-Relational-Database-Service-(RDS).png',
+      'Amazon-Simple-Email-Service-(SES).png',
+      'Amazon-Simple-Notification-Service-(SNS).png',
+      'Amazon-Simple-Queue-Service-(SQS).png',
+      'Amazon-Simple-Storage-Service-(S3).png',
+      'Amazon-Textract.png',
+      'Amazon-Virtual-Private-Cloud-(VPC).png',
+      'AWS-AppSync.png',
+      'AWS-Batch.png',
+      'AWS-Certificate-Manager-(ACM).png',
+      'AWS-CloudHSM.png',
+      'AWS-CodeCommit.png',
+      'AWS-CodeDeploy.png',
+      'AWS-DevOps-Agent.png',
+      'AWS-Direct-Connect.png',
+      'AWS-Glue.png',
+      'AWS-IAM-Identity-Center.png',
+      'AWS-IoT-Core.png',
+      'AWS-Lambda.png',
+      'AWS-Managed-Microsoft-AD.png',
+      'AWS-Security-Agent-part-of-AWS-Continuum.png',
+      'AWS-Security-Hub-CSPM.png',
+      'AWS-Security-Lake.png',
+      'AWS-Step-Functions.png',
+      'AWS-Systems-Manager.png',
+      'AWS-Transform-MGN.png',
+      'AWS-Transit-Gateway.png',
+      'AWS-WAF.png'
+    ];
+
+    for (let i = 1; i <= files.length; i++) {
+      const num = String(i).padStart(2, '0');
+
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <span class="number">${num}</span>
+        <img src="images/${files[i - 1]}" alt="${files[i - 1]}">
+      `;
+      field.appendChild(card);
+    }
+
+    function updateSize() {
+      const card = document.querySelector('.card');
+      const el = document.getElementById('card-size');
+      if (card && el) {
+        const rect = card.getBoundingClientRect();
+        el.textContent =
+          `カード1枚: ${Math.round(rect.width)}px × ${Math.round(rect.height)}px`;
+      }
+    }
+
+    window.addEventListener('resize', updateSize);
+    window.addEventListener('load', updateSize);
+    updateSize();
+
+    // Timer
+    let timerInterval = null;
+    let startTime = 0;
+    let elapsed = 0;
+    let running = false;
+
+    const btnStart = document.getElementById('btn-start');
+    const btnReset = document.getElementById('btn-reset');
+    const timerDisplay = document.getElementById('timer-display');
+
+    function formatTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function tick() {
+      elapsed = Date.now() - startTime;
+      timerDisplay.textContent = formatTime(elapsed);
+    }
+
+    btnStart.addEventListener('click', () => {
+      if (!running) {
+        running = true;
+        startTime = Date.now() - elapsed;
+        timerInterval = setInterval(tick, 200);
+        btnStart.textContent = '⏸ Stop';
+      } else {
+        running = false;
+        clearInterval(timerInterval);
+        btnStart.textContent = '▶ Start';
+      }
+    });
+
+    btnReset.addEventListener('click', () => {
+      running = false;
+      clearInterval(timerInterval);
+      elapsed = 0;
+      timerDisplay.textContent = '0:00';
+      btnStart.textContent = '▶ Start';
+    });
+  </script>
+</body>
+</html>
