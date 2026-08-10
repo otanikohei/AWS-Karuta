@@ -8,8 +8,19 @@
 		<title>AWS Karuta Japanese ver</title>
 		<script type="text/javascript" src="audio/audiojs/audio.min.js"></script>
 		<script>
+		  var audioInstances;
+		  var playCount = 0;
 		  audiojs.events.ready(function() {
-		    var as = audiojs.createAll();
+		    audioInstances = audiojs.createAll({
+		      trackEnded: function() {
+		        playCount++;
+		        if (playCount < 2) {
+		          this.play();
+		        } else {
+		          playCount = 0;
+		        }
+		      }
+		    });
 		  });
 		</script>
 		<script>
@@ -76,6 +87,15 @@
 			}
 
 			function ClickButtun(id){
+				// Stop audio playback when a card is selected
+				if (audioInstances) {
+					for (var i = 0; i < audioInstances.length; i++) {
+						if (audioInstances[i].playing) {
+							audioInstances[i].pause();
+						}
+					}
+				}
+				playCount = 0;
 				$("i" + id).style.display = "";
 			}
 

@@ -460,10 +460,7 @@
       if (svc.file === current.file) {
         // Correct
         cardEl.classList.add('correct-flash', 'taken');
-        if (currentAudio) {
-          currentAudio.pause();
-          currentAudio = null;
-        }
+        stopAudio();
         pauseTimer();
         currentQ++;
         progressEl.textContent = `${currentQ} / ${TOTAL_QUESTIONS}`;
@@ -481,13 +478,42 @@
     }
 
     // --- Audio ---
-    function playAudio(file) {
+    const READ_COUNT = 2;        // 読み上げ回数
+    const REPEAT_GAP_MS = 500;   // 読み上げ間の間隔
+    let audioToken = 0;          // 再生シーケンスの識別子（停止判定用）
+
+    function playOnce(file) {
       return new Promise((resolve) => {
-        currentAudio = new Audio(`audio/${file}.mp3`);
-        currentAudio.addEventListener('ended', resolve);
-        currentAudio.addEventListener('error', resolve);
-        currentAudio.play();
+        const audio = new Audio(`audio/${file}.mp3`);
+        currentAudio = audio;
+        let done = false;
+        const finish = () => { if (!done) { done = true; resolve(); } };
+        audio.addEventListener('ended', finish);
+        audio.addEventListener('error', finish);
+        audio.addEventListener('pause', finish); // 絵札選択などで停止されたとき
+        const p = audio.play();
+        if (p && p.catch) p.catch(finish);
       });
+    }
+
+    async function playAudio(file) {
+      const myToken = ++audioToken;
+      for (let i = 0; i < READ_COUNT; i++) {
+        await playOnce(file);
+        if (myToken !== audioToken) return; // 途中で停止された
+        if (i < READ_COUNT - 1) {
+          await wait(REPEAT_GAP_MS);
+          if (myToken !== audioToken) return;
+        }
+      }
+    }
+
+    function stopAudio() {
+      audioToken++; // 進行中のシーケンスを無効化
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
     }
 
     // --- Game Flow ---
