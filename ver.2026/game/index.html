@@ -66,6 +66,14 @@
       padding: 2px;
     }
 
+    /* Landscape: switch to 10 columns x 5 rows */
+    @media (orientation: landscape) {
+      .field {
+        grid-template-columns: repeat(10, 1fr);
+        grid-template-rows: repeat(5, 1fr);
+      }
+    }
+
     .card {
       position: relative;
       display: flex;
