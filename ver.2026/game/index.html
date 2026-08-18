@@ -57,12 +57,13 @@
     /* Field */
     .field {
       width: 100vw;
-      height: 100vh;
+      height: calc(100vh - 40px);
+      margin-top: 40px;
       display: grid;
-      grid-template-columns: repeat(10, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 4px;
-      padding: 44px 4px 4px 4px;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(10, 1fr);
+      gap: 2px;
+      padding: 2px;
     }
 
     .card {
@@ -71,11 +72,12 @@
       align-items: center;
       justify-content: center;
       background: #fff;
-      border-radius: 4px;
+      border-radius: 3px;
       overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4);
       cursor: pointer;
       transition: transform 0.1s, opacity 0.3s;
+      aspect-ratio: 1 / 1;
     }
 
     .card:hover {
@@ -112,7 +114,7 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      padding: 2px;
+      padding: 1px;
     }
 
     /* Overlay */
