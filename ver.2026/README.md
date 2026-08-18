@@ -7,19 +7,44 @@ AWS かるたは、AWS のサービスや機能を楽しみ遊びながら自然
 絵札は、競技用かるたと同じ 横: 52mm、縦: 73mm にてデザインしています。  
 等倍での印刷を推奨します。
 
-## メンテナンス
+## ディレクトリ構成
 
+```
+ver.2026/
+├── game/            ... ゲーム本体（S3等でホスティング）
+│   ├── index.html         かるたゲーム（10問チャレンジ）
+│   ├── reader.html        読み上げモード
+│   ├── images/            取り札画像
+│   └── audio/             読み上げ音声 (mp3)
+├── scripts/         ... 開発用スクリプト（ホスティング不要）
+│   └── create-audio.sh   Polly で音声ファイルを生成
+└── README.md
+```
 
+## ホスティング
 
-JAWS-UG arranged Karuta game for learning AWS service.
-There is a function to speak on the web by polly in Reader directory.
+`game/` ディレクトリを S3 静的ウェブサイトホスティング等にアップロードしてください。  
+`scripts/` は開発用のためアップロード不要です。
 
-It is reading system for AWS-Karuta. You can use to upload `Reader` to S3 websitehosting.
+## 音声ファイルの再生成
 
-# Rule
+音声は Amazon Polly (Neural, Tomoko) で生成しています。
 
-- Lay out AWS icon cards.
-- Someone reads out the description of AWS service.
-- All players search for the AWS icon card he read.
-- The player who finds this card first gets to keep the card.
-- The winner of the game is the player who collects the most icon cards.
+```bash
+cd ver.2026/scripts
+bash create-audio.sh
+```
+
+AWS CLI の認証情報が必要です。生成された mp3 は `game/audio/` に出力されます。
+
+## 更新履歴
+
+| 日付 | 内容 |
+|------|------|
+| 2026-07-29 | ver.2026 かるたゲームのアセット・スクリプトを追加 |
+| 2026-07-29 | AWS Transform MGN の画像を修正 |
+| 2026-08-10 | 読み上げ2回再生対応、Polly Neural Tomoko での音声再生成 |
+| 2026-08-19 | 読み上げモード (`reader.html`) を追加 |
+| 2026-08-19 | カードグリッドを縦向き 5×10 / 横向き 10×5 のレスポンシブ対応に変更 |
+| 2026-08-19 | AWS Security Lake の音声読み上げを修正（OCSF → オーシーエスエフ） |
+| 2026-08-19 | `create.sh` を `scripts/create-audio.sh` に移動（ホスティング対象から除外） |
