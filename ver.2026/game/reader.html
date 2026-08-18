@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS かるた — 読み上げモード</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #1a472a;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      color: #fff;
+      user-select: none;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 16px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .header .mode-title {
+      font-size: 14px;
+      font-weight: bold;
+      opacity: 0.8;
+    }
+
+    .header .progress {
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      color: #4fc3f7;
+    }
+
+    /* Content area */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 20px 0;
+    }
+
+    .service-name {
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    .reading-text {
+      font-size: 18px;
+      text-align: center;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.6;
+      max-width: 600px;
+      padding: 0 16px;
+    }
+
+    .reading-text .upper {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .reading-text .bottom {
+      display: block;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      color: #fff;
+    }
+
+    .btn:active {
+      transform: scale(0.92);
+    }
+
+    .btn-prev,
+    .btn-next {
+      width: 56px;
+      height: 56px;
+      background: rgba(255,255,255,0.15);
+      font-size: 22px;
+    }
+
+    .btn-prev:hover,
+    .btn-next:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .btn-play {
+      width: 72px;
+      height: 72px;
+      background: #4caf50;
+      font-size: 28px;
+    }
+
+    .btn-play:hover {
+      background: #66bb6a;
+    }
+
+    .btn-play.playing {
+      background: #f57c00;
+    }
+
+    .btn-play.playing:hover {
+      background: #fb8c00;
+    }
+
+    /* Back button */
+    .btn-back {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      width: auto;
+      height: auto;
+      border-radius: 6px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.12);
+      font-size: 13px;
+      font-weight: bold;
+      z-index: 100;
+    }
+
+    .btn-back:hover {
+      background: rgba(255,255,255,0.22);
+    }
+
+    /* Landscape adjustments */
+    @media (orientation: landscape) {
+      .container {
+        padding: 10px 24px;
+      }
+
+      .content {
+        gap: 16px;
+        padding: 10px 0;
+      }
+
+      .service-name {
+        font-size: 24px;
+      }
+
+      .reading-text {
+        font-size: 16px;
+      }
+
+      .controls {
+        padding-top: 10px;
+      }
+
+      .btn-prev,
+      .btn-next {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+      }
+
+      .btn-play {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="btn btn-back">← 戻る</a>
+
+  <div class="container">
+    <div class="header">
+      <span class="mode-title">読み上げモード</span>
+      <span class="progress" id="progress">1 / 50</span>
+    </div>
+
+    <div class="content">
+      <div class="service-name" id="service-name">—</div>
+      <div class="reading-text">
+        <span class="upper" id="text-upper"></span>
+        <span class="bottom" id="text-bottom"></span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-prev" id="btn-prev" aria-label="前へ">⏮</button>
+      <button class="btn btn-play" id="btn-play" aria-label="再生">▶</button>
+      <button class="btn btn-next" id="btn-next" aria-label="次へ">⏭</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Data (same as index.html) ---
+    const services = [
+      { service: 'Amazon Athena', file: 'Amazon-Athena', upper: 'バケット内のテキストを', bottom: '自由にクエリ Amazon Athena' },
+      { service: 'Amazon Bedrock', file: 'Amazon-Bedrock', upper: 'モデルを選んで呼ぶだけで', bottom: 'AI が答える Amazon Bedrock' },
+      { service: 'Amazon Braket', file: 'Amazon-Braket', upper: '桁違いの処理速度', bottom: '量子コンピューティング Amazon Braket' },
+      { service: 'Amazon CloudFront', file: 'Amazon-CloudFront', upper: '世界のどこから繋いでも', bottom: '快適アクセス Amazon CloudFront' },
+      { service: 'Amazon Cognito', file: 'Amazon-Cognito', upper: 'ユーザープールもフェデレートも', bottom: '認証するなら Amazon Cognito' },
+      { service: 'Amazon Connect', file: 'Amazon-Connect', upper: '交換機も電話機も', bottom: '無くても通話 Amazon Connect' },
+      { service: 'Amazon Data Firehose', file: 'Amazon-Data-Firehose', upper: '蛇口にホースを繋ぐように', bottom: 'データが流れる Amazon Data Firehose' },
+      { service: 'Amazon DynamoDB', file: 'Amazon-DynamoDB', upper: 'Key と Value で入れていく', bottom: 'スキャンとクエリで Amazon DynamoDB' },
+      { service: 'Amazon EBS', file: 'Amazon-Elastic-Block-Store-(EBS)', upper: '電源落ちても大丈夫', bottom: 'データは永続 Amazon EBS' },
+      { service: 'Amazon EC2', file: 'Amazon-Elastic-Compute-Cloud-(EC2)', upper: 'ハードのお世話は もうしない', bottom: '欲しいときだけ Amazon EC2' },
+      { service: 'Amazon ECS', file: 'Amazon-Elastic-Container-Service-(ECS)', upper: 'コンテナ管理で悩むなら', bottom: 'タスクに任せて Amazon ECS' },
+      { service: 'Amazon EFS', file: 'Amazon-Elastic-File-System-(EFS)', upper: '複数インスタンスまたいでも', bottom: '共有ストレージ Amazon EFS' },
+      { service: 'Amazon GameLift', file: 'Amazon-GameLift', upper: 'マルチプレイのサーバーを', bottom: 'スケーリングお任せ Amazon GameLift' },
+      { service: 'Amazon GuardDuty', file: 'Amazon-GuardDuty', upper: '不審な行動、見つけ出す', bottom: '脅威検知は Amazon GuardDuty で' },
+      { service: 'Amazon Inspector', file: 'Amazon-Inspector', upper: '脆弱性を見つけ出す', bottom: '継続検査を Amazon Inspector で' },
+      { service: 'Amazon IVS', file: 'Amazon-Interactive-Video-Service-(IVS)', upper: 'ライブ配信のインフラを', bottom: '低遅延で届ける Amazon IVS' },
+      { service: 'Amazon Macie', file: 'Amazon-Macie', upper: 'バケット覗いて見つけ出す', bottom: '機密データ発見 Amazon Macie' },
+      { service: 'Amazon Managed Blockchain', file: 'Amazon-Managed-Blockchain', upper: '信頼できる台帳が欲しければ', bottom: '改ざんさせない Amazon Managed Blockchain' },
+      { service: 'Amazon OpenSearch Service', file: 'Amazon-OpenSearch-Service', upper: 'ログも全文検索も', bottom: 'まとめて検索 Amazon OpenSearch' },
+      { service: 'Amazon Polly', file: 'Amazon-Polly', upper: '書いた文章そのまんま', bottom: '読み上げてくれる Amazon Polly' },
+      { service: 'Amazon Quick', file: 'Amazon-Quick', upper: 'BI ツールだけじゃない', bottom: 'AI コンシェルジュ Amazon Quick' },
+      { service: 'Amazon Redshift', file: 'Amazon-Redshift', upper: '高速、縦向き検索の', bottom: 'データウェアハウス Amazon Redshift' },
+      { service: 'Amazon RDS', file: 'Amazon-Relational-Database-Service-(RDS)', upper: 'データベースの障害だ', bottom: 'フェイルオーバー Amazon RDS' },
+      { service: 'Amazon SES', file: 'Amazon-Simple-Email-Service-(SES)', upper: '大量メール配信を', bottom: 'スケーラブルに Amazon SES' },
+      { service: 'Amazon SNS', file: 'Amazon-Simple-Notification-Service-(SNS)', upper: 'Pub/Sub でファンアウト', bottom: '通知を届ける Amazon SNS' },
+      { service: 'Amazon SQS', file: 'Amazon-Simple-Queue-Service-(SQS)', upper: 'メッセージを溜めて順番に', bottom: '疎結合なら Amazon SQS' },
+      { service: 'Amazon S3', file: 'Amazon-Simple-Storage-Service-(S3)', upper: 'イレブンナインの耐久性', bottom: 'オブジェクトストレージ Amazon S3' },
+      { service: 'Amazon Textract', file: 'Amazon-Textract', upper: '紙の書類もスキャンして', bottom: '文字を抽出 Amazon Textract' },
+      { service: 'Amazon VPC', file: 'Amazon-Virtual-Private-Cloud-(VPC)', upper: 'クラウド、セキュアに隔離して', bottom: '限定アクセス Amazon VPC' },
+      { service: 'AWS AppSync', file: 'AWS-AppSync', upper: 'あちこち分散サービスを', bottom: 'ひとつにつなぐ AWS AppSync' },
+      { service: 'AWS Batch', file: 'AWS-Batch', upper: '裏ではコンテナ動きます', bottom: 'バッチ処理なら AWS Batch' },
+      { service: 'AWS Certificate Manager', file: 'AWS-Certificate-Manager-(ACM)', upper: '証明書の管理なら', bottom: 'お任せ Amazon Certificate Manager' },
+      { service: 'AWS CloudHSM', file: 'AWS-CloudHSM', upper: 'ハードウェアで鍵管理', bottom: 'AWS CloudHSM' },
+      { service: 'AWS CodeCommit', file: 'AWS-CodeCommit', upper: 'やっぱりお前が必要だ', bottom: 'Git 管理は AWS CodeCommit で' },
+      { service: 'AWS CodeDeploy', file: 'AWS-CodeDeploy', upper: '裏では VM 動きます', bottom: 'CI/CD AWS CodeDeploy' },
+      { service: 'AWS DevOps Agent', file: 'AWS-DevOps-Agent', upper: 'ログ調査の手が足りない', bottom: '猫の手なります AWS DevOps Agent' },
+      { service: 'AWS Direct Connect', file: 'AWS-Direct-Connect', upper: '専用線接続で', bottom: '通信安定 AWS Direct Connect' },
+      { service: 'AWS Glue', file: 'AWS-Glue', upper: '異なるデータ形式を', bottom: 'ETL 処理 AWS Glue' },
+      { service: 'AWS IAM Identity Center', file: 'AWS-IAM-Identity-Center', upper: 'SAML 連携も SSO も', bottom: 'おまかせ AWS IAM Identity Center' },
+      { service: 'AWS IoT Core', file: 'AWS-IoT-Core', upper: 'モノとクラウドをつなぐなら', bottom: 'デバイス通信 AWS IoT Core' },
+      { service: 'AWS Lambda', file: 'AWS-Lambda', upper: '生まれてはや 11 年', bottom: 'サーバーレスサービス AWS Lambda' },
+      { service: 'AWS Managed Microsoft AD', file: 'AWS-Managed-Microsoft-AD', upper: 'AD サーバー買い換える', bottom: '前に検討 AWS Managed Microsoft AD' },
+      { service: 'AWS Security Agent', file: 'AWS-Security-Agent-part-of-AWS-Continuum', upper: '侵入テストも考えます', bottom: 'Continuum に統合された AWS Security Agent' },
+      { service: 'AWS Security Hub CSPM', file: 'AWS-Security-Hub-CSPM', upper: 'コンプライアンス準拠なら', bottom: 'スコアで見える化 AWS Security Hub CSPM' },
+      { service: 'AWS Security Lake', file: 'AWS-Security-Lake', upper: 'OCSF 形式で', bottom: 'まとめて収集 AWS Security Lake' },
+      { service: 'AWS Step Functions', file: 'AWS-Step-Functions', upper: 'ステートマシンを操って', bottom: '柔軟に処理する AWS Step Functions' },
+      { service: 'AWS Systems Manager', file: 'AWS-Systems-Manager', upper: 'サーバー管理はお任せを！', bottom: 'パッチも当てれる AWS Systems Manager' },
+      { service: 'AWS Transform MGN', file: 'AWS-Transform-MGN', upper: 'リフトアンドシフトなら', bottom: '名前が変わった AWS Transform MGN' },
+      { service: 'AWS Transit Gateway', file: 'AWS-Transit-Gateway', upper: 'フルメッシュに疲れたら', bottom: 'アタッチメントで楽々 AWS Transit Gateway' },
+      { service: 'AWS WAF', file: 'AWS-WAF', upper: 'わずか数分でブロックが', bottom: 'できるようになった AWS WAF' },
+    ];
+
+    // --- State ---
+    let currentIndex = 0;
+    let currentAudio = null;
+    let isPlaying = false;
+    let audioToken = 0;
+
+    const READ_COUNT = 2;
+    const REPEAT_GAP_MS = 500;
+
+    // --- DOM ---
+    const serviceNameEl = document.getElementById('service-name');
+    const textUpperEl = document.getElementById('text-upper');
+    const textBottomEl = document.getElementById('text-bottom');
+    const progressEl = document.getElementById('progress');
+    const btnPlay = document.getElementById('btn-play');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+
+    // --- Shuffle on load ---
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    const shuffled = shuffle(services);
+
+    // --- Display ---
+    function display() {
+      const svc = shuffled[currentIndex];
+      serviceNameEl.textContent = svc.service;
+      textUpperEl.textContent = svc.upper;
+      textBottomEl.textContent = svc.bottom;
+      progressEl.textContent = `${currentIndex + 1} / ${shuffled.length}`;
+    }
+
+    // --- Audio ---
+    function playOnce(file) {
+      return new Promise((resolve) => {
+        const audio = new Audio(`audio/${file}.mp3`);
+        currentAudio = audio;
+        let done = false;
+        const finish = () => { if (!done) { done = true; resolve(); } };
+        audio.addEventListener('ended', finish);
+        audio.addEventListener('error', finish);
+        audio.addEventListener('pause', finish);
+        const p = audio.play();
+        if (p && p.catch) p.catch(finish);
+      });
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function playAudio() {
+      const myToken = ++audioToken;
+      const svc = shuffled[currentIndex];
+      setPlayingState(true);
+
+      for (let i = 0; i < READ_COUNT; i++) {
+        await playOnce(svc.file);
+        if (myToken !== audioToken) return;
+        if (i < READ_COUNT - 1) {
+          await wait(REPEAT_GAP_MS);
+          if (myToken !== audioToken) return;
+        }
+      }
+
+      if (myToken === audioToken) {
+        setPlayingState(false);
+      }
+    }
+
+    function stopAudio() {
+      audioToken++;
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      setPlayingState(false);
+    }
+
+    function setPlayingState(playing) {
+      isPlaying = playing;
+      btnPlay.textContent = playing ? '⏸' : '▶';
+      btnPlay.classList.toggle('playing', playing);
+    }
+
+    // --- Controls ---
+    btnPlay.addEventListener('click', () => {
+      if (isPlaying) {
+        stopAudio();
+      } else {
+        playAudio();
+      }
+    });
+
+    btnNext.addEventListener('click', () => {
+      stopAudio();
+      if (currentIndex < shuffled.length - 1) {
+        currentIndex++;
+      } else {
+        currentIndex = 0;
+      }
+      display();
+    });
+
+    btnPrev.addEventListener('click', () => {
+      stopAudio();
+      if (currentIndex > 0) {
+        currentIndex--;
+      } else {
+        currentIndex = shuffled.length - 1;
+      }
+      display();
+    });
+
+    // --- Init ---
+    display();
+  </script>
+</body>
+</html>
